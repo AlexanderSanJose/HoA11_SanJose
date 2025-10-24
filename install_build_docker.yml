@@ -1,0 +1,39 @@
+---
+- name: Prepare Docker build context and run web+DB container
+  hosts: all
+  become: true
+
+  pre_tasks:
+    - name: Make sure build directory exists
+      file:
+        path: /home/lex0/HoA11_SanJose
+        state: directory
+
+    - name: Copy Dockerfile to remote hosts
+      copy:
+        src: dockerfile         
+        dest: /home/lex0/HoA11_SanJose/dockerfile
+
+  tasks:
+    - name: Ensure Docker service is running
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Build Docker image from the Dockerfile
+      community.docker.docker_image:
+        name: web_db_image
+        build:
+          path: /home/lex0/HoA11_SanJose
+        source: build
+
+    - name: Run Docker container
+      community.docker.docker_container:
+        name: web_db_container
+        image: web_db_image
+        ports:
+          - "8080:80"
+          - "33060:3306"
+
+
